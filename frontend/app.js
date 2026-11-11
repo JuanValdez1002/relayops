@@ -33,6 +33,8 @@ const elements = {
     createEventError: document.getElementById("create-event-error"),
     submitEventButton: document.getElementById("submit-event-button"),
     cancelCreateEvent: document.getElementById("cancel-create-event"),
+    navDashboard: document.getElementById("nav-dashboard"),
+    navEvents: document.getElementById("nav-events"),
 };
 
 let allEvents = [];
@@ -440,6 +442,22 @@ elements.createModal.addEventListener("click", event => {
     if (event.target === elements.createModal) {
         closeCreateEventModal();
     }
+});
+
+// Sidebar navigation
+const navLinks = [
+    elements.navDashboard,
+    elements.navEvents
+];
+
+navLinks.forEach(link => {
+    link.addEventListener("click", () => {
+        navLinks.forEach(navLink => {
+            navLink.classList.remove("active");
+        });
+
+        link.classList.add("active");
+    });
 });
 
 refreshDashboard();
