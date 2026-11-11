@@ -43,6 +43,19 @@ RelayOps uses four main services:
 3. Worker: Processes pending events and handles retries.
 4. Database: Stores event records and processing information.
 
+
+## Screenshots
+
+### Dashboard
+![RelayOps Dashboard](screenshots/dashboard.png)
+
+### Event Details
+![Event Details](screenshots/event-details.png)
+
+### Event Management
+![Events Table](screenshots/events-table.png)
+
+
 ## Getting Started
 
 ### Requirements
