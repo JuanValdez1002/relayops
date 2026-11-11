@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RelayOps Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">R</div>
+                <span>RelayOps</span>
+            </div>
+
+            <nav>
+                <a href="#" class="nav-link active">Dashboard</a>
+                <a href="#" class="nav-link">Events</a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="status-dot"></span>
+                API connection
+                <span id="connection-status">Checking...</span>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">OVERVIEW</p>
+                    <h1>Dashboard</h1>
+                    <p class="subtitle">Monitor your event processing system.</p>
+                </div>
+
+                <button id="refresh-button">Refresh data</button>
+            </header>
+
+            <section class="stats-grid">
+                <article class="stat-card">
+                    <p>Total events</p>
+                    <h2 id="total-count">0</h2>
+                    <span>All recorded events</span>
+                </article>
+
+                <article class="stat-card">
+                    <p>Received</p>
+                    <h2 id="received-count">0</h2>
+                    <span>Waiting for processing</span>
+                </article>
+
+                <article class="stat-card">
+                    <p>Processing</p>
+                    <h2 id="processing-count">0</h2>
+                    <span>Currently being handled</span>
+                </article>
+
+                <article class="stat-card">
+                    <p>Processed</p>
+                    <h2 id="processed-count">0</h2>
+                    <span>Successfully completed</span>
+                </article>
+
+                <article class="stat-card">
+                    <p>Failed</p>
+                    <h2 id="failed-count">0</h2>
+                    <span>Require attention</span>
+                </article>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>System activity</h2>
+                        <p>Live event statistics from PostgreSQL</p>
+                    </div>
+                    <span id="last-updated">Not updated yet</span>
+                </div>
+
+                <div id="error-message" class="error-message"></div>
+            </section>
+            <section class="panel events-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Recent events</h2>
+                        <p>Browse and monitor individual events.</p>
+                    </div>
+
+                    <div class="panel-actions">
+                        <span id="event-count">0 events</span>
+                        <button id="add-event-button">+ Add Event</button>
+                    </div>
+                </div>
+
+                <div class="event-controls">
+                    <input
+                        type="text"
+                        id="event-search"
+                        placeholder="Search by event ID or type..."
+                    >
+
+                    <select id="status-filter">
+                        <option value="all">All statuses</option>
+                        <option value="received">Received</option>
+                        <option value="processing">Processing</option>
+                        <option value="processed">Processed</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event ID</th>
+                                <th>Event type</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                                <th>Retries</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-table-body">
+                            <tr>
+                                <td colspan="6">Loading events...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <button id="previous-page" disabled>Previous</button>
+                        <span id="page-number">Page 1</span>
+                        <button id="next-page">Next</button>
+                    </div>
+
+                </div>
+
+                <p id="events-error" class="error-message"></p>
+            </section>
+                        <!-- Event Details Modal -->
+            <div id="event-modal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <p class="eyebrow">EVENT DETAILS</p>
+                            <h2>Event information</h2>
+                        </div>
+
+                        <button id="close-modal" class="close-button" type="button">
+                            &times;
+                        </button>
+                    </div>
+
+                    <div id="event-details">
+                        Loading event details...
+                    </div>
+
+                    <div id="event-actions"></div>
+                </div>
+            </div>
+                        <!-- Create Event Modal -->
+            <div id="create-event-modal" class="modal">
+                <div class="modal-content create-event-content">
+                    <div class="modal-header">
+                        <div>
+                            <p class="eyebrow">NEW EVENT</p>
+                            <h2>Create an event</h2>
+                        </div>
+
+                        <button
+                            id="close-create-modal"
+                            class="close-button"
+                            type="button"
+                        >
+                            &times;
+                        </button>
+                    </div>
+
+                    <form id="create-event-form">
+                        <label for="event-type">Event type</label>
+                        <input
+                            id="event-type"
+                            type="text"
+                            placeholder="order.created"
+                            maxlength="100"
+                            required
+                        >
+
+                        <label for="event-source">Source</label>
+                        <input
+                            id="event-source"
+                            type="text"
+                            placeholder="store-api"
+                            maxlength="100"
+                            required
+                        >
+
+                        <label for="event-payload">JSON payload</label>
+                        <textarea
+                            id="event-payload"
+                            rows="8"
+                            required
+                        >{}</textarea>
+
+                        <p id="create-event-error" class="error-message"></p>
+
+                        <div class="form-actions">
+                            <button
+                                id="cancel-create-event"
+                                type="button"
+                                class="cancel-button"
+                            >
+                                Cancel
+                            </button>
+
+                            <button id="submit-event-button" type="submit">
+                                Create Event
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
