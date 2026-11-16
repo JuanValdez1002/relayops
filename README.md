@@ -1,5 +1,9 @@
 # RelayOps
 
+
+![Backend Tests](https://github.com/JuanValdez1002/relayops/actions/workflows/tests.yml/badge.svg)
+
+
 RelayOps is an event processing platform built with Python, FastAPI, PostgreSQL, and Docker.
 
 It provides an API for receiving events, a background worker for processing them, automatic retries for failed events, and a dashboard for monitoring event activity.
