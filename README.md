@@ -47,6 +47,19 @@ RelayOps uses four main services:
 3. Worker: Processes pending events and handles retries.
 4. Database: Stores event records and processing information.
 
+### Architecture Diagram
+![Architecture Diagram](screenshots\Diagram-Relayops.png)
+
+
+The system uses Docker Compose to run four services:
+
+- Nginx serves the frontend and forwards API requests to FastAPI.
+- FastAPI handles event creation, retrieval, status updates, and retry requests.
+- PostgreSQL stores events, processing states, and retry information.
+- The background worker polls PostgreSQL, claims pending events, processes them, and handles retries.
+
+The frontend communicates with the backend through REST API endpoints. The worker operates independently from incoming API requests.
+
 
 ## Screenshots
 
