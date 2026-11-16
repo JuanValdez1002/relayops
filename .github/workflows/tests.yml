@@ -1,0 +1,48 @@
+
+name: Backend Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: relayops
+          POSTGRES_PASSWORD: relayops
+          POSTGRES_DB: relayops_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U relayops -d relayops_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql+psycopg://relayops:relayops@localhost:5432/relayops_test
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements-dev.txt
+
+      - name: Run backend tests
+        working-directory: backend
+        run: python -m pytest -v
