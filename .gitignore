@@ -16,3 +16,7 @@ __pycache__/
 # Operating system
 .DS_Store
 Thumbs.db
+
+# Test coverage
+.coverage
+htmlcov/

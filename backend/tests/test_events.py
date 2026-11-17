@@ -1,6 +1,9 @@
 from fastapi.testclient import TestClient
 
 from main import app
+import asyncio
+import main
+from starlette.requests import Request
 
 
 client = TestClient(app)
@@ -371,3 +374,103 @@ def test_event_status_rejects_unknown_value():
     )
 
     assert response.status_code == 422
+
+
+def test_api_lifespan_startup_and_shutdown(monkeypatch):
+    create_calls = []
+    log_messages = []
+
+    def mock_create_all(*, bind):
+        create_calls.append(bind)
+
+    monkeypatch.setattr(
+        main.Base.metadata,
+        "create_all",
+        mock_create_all,
+    )
+    monkeypatch.setattr(
+        main.logger,
+        "info",
+        lambda *args: log_messages.append(args),
+    )
+
+    async def run_lifespan():
+        async with main.lifespan(main.app):
+            pass
+
+    asyncio.run(run_lifespan())
+
+    assert create_calls == [main.engine]
+    assert len(log_messages) == 2
+    assert log_messages[0][0] == (
+        "RelayOps API started. Database tables verified."
+    )
+    assert log_messages[1][0] == "RelayOps API shutting down."
+
+
+def test_unexpected_error_handler_returns_500(monkeypatch):
+    log_messages = []
+
+    monkeypatch.setattr(
+        main.logger,
+        "exception",
+        lambda *args: log_messages.append(args),
+    )
+
+    request = Request({
+        "type": "http",
+        "method": "GET",
+        "path": "/test",
+        "headers": [],
+    })
+
+    response = asyncio.run(
+        main.unexpected_error_handler(
+            request,
+            RuntimeError("Test exception"),
+        )
+    )
+
+    assert response.status_code == 500
+    assert response.body == b'{"detail":"Internal server error"}'
+    assert len(log_messages) == 1
+
+
+def test_update_status_event_not_found():
+    response = client.patch(
+        "/events/nonexistent-event/status",
+        json={"status": "processing"}
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Event not found"
+
+
+def test_update_status_rejects_invalid_transition():
+    create_response = client.post(
+        "/events",
+        json={
+            "event_type": "test.event",
+            "source": "pytest",
+            "payload": {}
+        }
+    )
+
+    assert create_response.status_code == 201
+
+    event_id = create_response.json()["id"]
+
+    response = client.patch(
+        f"/events/{event_id}/status",
+        json={"status": "processed"}
+    )
+
+    assert response.status_code == 400
+    assert "Cannot transition from received to processed" in response.json()["detail"]
+
+def test_strip_required_strings_preserves_non_string_values():
+    from schemas import EventCreate
+
+    result = EventCreate.strip_required_strings(123)
+
+    assert result == 123
