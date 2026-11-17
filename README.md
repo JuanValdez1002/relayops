@@ -121,17 +121,152 @@ docker compose down
 
 Your database volume remains intact when you stop the application this way.
 
-## API Endpoints
+
+## API Documentation
+
+RelayOps exposes a REST API through FastAPI.
+
+Interactive API documentation is available at:
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+### Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/health` | API health check |
-| GET | `/events` | Retrieve events |
-| POST | `/events` | Create an event |
+| GET | `/health` | Check API health |
 | GET | `/events/stats` | Retrieve event statistics |
-| GET | `/events/{event_id}` | Retrieve one event |
+| POST | `/events` | Create an event |
+| GET | `/events` | List events |
+| GET | `/events/{event_id}` | Retrieve an event |
 | POST | `/events/{event_id}/retry` | Retry a failed event |
 | PATCH | `/events/{event_id}/status` | Update event status |
+
+### Create an Event
+
+`POST /events`
+
+Request:
+
+```json
+{
+  "event_type": "order.created",
+  "source": "ecommerce",
+  "payload": {
+    "order_id": "ORD-1001",
+    "customer_id": "CUS-501",
+    "total": 149.99
+  }
+}
+```
+
+Response: `201 Created`
+
+```json
+{
+  "id": "generated-event-uuid",
+  "event_type": "order.created",
+  "source": "ecommerce",
+  "payload": {
+    "order_id": "ORD-1001",
+    "customer_id": "CUS-501",
+    "total": 149.99
+  },
+  "status": "received",
+  "created_at": "2026-11-17T20:00:00Z",
+  "retry_count": 0,
+  "last_error": null,
+  "next_retry_at": null,
+  "processing_started_at": null
+}
+```
+
+### List Events
+
+`GET /events`
+
+Query parameters:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `status` | None | Filter by event status |
+| `skip` | 0 | Number of records to skip |
+| `limit` | 20 | Number of records to return, maximum 100 |
+
+Example:
+
+`GET /events?status=processed&skip=0&limit=10`
+
+Supported statuses:
+
+- `received`
+- `processing`
+- `processed`
+- `failed`
+
+### Event Statistics
+
+`GET /events/stats`
+
+Example response:
+
+```json
+{
+  "total": 10,
+  "received": 2,
+  "processing": 1,
+  "processed": 6,
+  "failed": 1
+}
+```
+
+### Retry an Event
+
+`POST /events/{event_id}/retry`
+
+Only failed events are eligible for manual retry.
+
+A successful retry request:
+
+- Changes status to `received`.
+- Resets retry count to zero.
+- Clears the previous error.
+- Clears the scheduled retry time.
+- Clears the processing start time.
+
+### Update Event Status
+
+`PATCH /events/{event_id}/status`
+
+Request:
+
+```json
+{
+  "status": "processing"
+}
+```
+
+Allowed transitions:
+
+| Current status | Allowed next statuses |
+|---|---|
+| received | processing |
+| processing | processed, failed |
+| failed | processing |
+| processed | None |
+
+### Error Responses
+
+| HTTP status | Description |
+|---|---|
+| 400 | Invalid status, pagination parameters, or status transition |
+| 404 | Event not found |
+| 422 | Invalid request body |
+| 500 | Unexpected internal server error |
+
+Unexpected server errors are logged and return a generic error response.
+
 
 ## Event Lifecycle
 
