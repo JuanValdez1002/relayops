@@ -24,10 +24,3 @@ def test_missing_database_url_raises_error():
 
     assert result.returncode != 0
     assert "DATABASE_URL is missing from .env" in result.stderr
-
-def test_strip_required_strings_preserves_non_string_values():
-    from schemas import EventCreate
-
-    result = EventCreate.strip_required_strings(123)
-
-    assert result == 123

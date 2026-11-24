@@ -218,8 +218,12 @@ def run_worker():
             handle_event_failure(event["id"], error)
 
 
-if __name__ == "__main__":
+def main():
     try:
         run_worker()
     except KeyboardInterrupt:
         logger.info("RelayOps worker stopped.")
+
+
+if __name__ == "__main__":
+    main()
