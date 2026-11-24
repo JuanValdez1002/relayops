@@ -321,8 +321,6 @@ def test_run_worker_handles_processing_exception(monkeypatch):
 
 
 def test_main_entry_point_handles_keyboard_interrupt(monkeypatch):
-    import runpy
-
     logged_messages = []
 
     monkeypatch.setattr(
@@ -337,6 +335,6 @@ def test_main_entry_point_handles_keyboard_interrupt(monkeypatch):
         lambda *args: logged_messages.append(args),
     )
 
-    runpy.run_module("worker", run_name="__main__")
+    worker.main()
 
     assert logged_messages[-1] == ("RelayOps worker stopped.",)
